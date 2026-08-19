@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Альбом — ' + ${event.title}">Альбом воспоминаний</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav th:replace="~{events/fragments/layout :: navbar}"></nav>
+
+<main class="page-container">
+    <div th:replace="~{events/fragments/layout :: alerts}"></div>
+
+    <div class="page-header">
+        <h1 th:text="${event.title}">Мероприятие</h1>
+        <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-outline">← К мероприятию</a>
+    </div>
+
+    <div th:replace="~{events/fragments/layout :: tabs(${event}, ${activeTab})}"></div>
+
+    <div class="feature-panel">
+        <h2>📸 Альбом воспоминаний</h2>
+        <p class="panel-hint">
+            Всего фото: <b th:text="${photoCount}">0</b>. Снимки автоматически группируются по дням.
+        </p>
+
+        <form th:action="@{/events/{id}/album(id=${event.id})}" method="post"
+              enctype="multipart/form-data" class="inline-form">
+            <div class="form-group">
+                <label>Фото</label>
+                <input type="file" name="file" accept="image/*" required/>
+            </div>
+            <div class="form-group">
+                <label>Подпись</label>
+                <input type="text" name="caption" placeholder="Как мы дошли до вершины"/>
+            </div>
+            <button type="submit" class="btn btn-primary">Загрузить</button>
+        </form>
+    </div>
+
+    <div th:if="${#lists.isEmpty(groups)}" class="empty-state">
+        <div class="empty-icon">📷</div>
+        <p>Фото пока нет. Загрузи первое воспоминание!</p>
+    </div>
+
+    <div class="photo-group" th:each="g : ${groups}">
+        <h3 class="photo-group-title">
+            <span th:text="${g.label}">Сегодня</span>
+            <span class="photo-group-count" th:text="${#lists.size(g.photos)} + ' фото'"></span>
+        </h3>
+        <div class="photo-grid">
+            <figure class="photo-item" th:each="p : ${g.photos}">
+                <a th:href="@{/events/{id}/album/photos/{pid}(id=${event.id}, pid=${p.id})}" target="_blank">
+                    <img th:src="@{/events/{id}/album/photos/{pid}(id=${event.id}, pid=${p.id})}"
+                         th:alt="${p.caption} ?: ${p.originalName}"/>
+                </a>
+                <figcaption>
+                    <span th:if="${p.caption != null}" th:text="${p.caption}"></span>
+                    <span class="photo-meta"
+                          th:text="${p.uploaderName} + ' · ' + ${p.takenAt} + ' · ' + ${p.sizeHuman}"></span>
+                    <form th:action="@{/events/{id}/album/photos/{pid}/delete(id=${event.id}, pid=${p.id})}"
+                          method="post">
+                        <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+                    </form>
+                </figcaption>
+            </figure>
+        </div>
+    </div>
+</main>
+</body>
+</html>

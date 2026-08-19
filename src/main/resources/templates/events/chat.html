@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Чат — ' + ${event.title}">Чат мероприятия</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav th:replace="~{events/fragments/layout :: navbar}"></nav>
+
+<main class="page-container">
+    <div th:replace="~{events/fragments/layout :: alerts}"></div>
+
+    <div class="page-header">
+        <h1 th:text="${event.title}">Мероприятие</h1>
+        <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-outline">← К мероприятию</a>
+    </div>
+
+    <div th:replace="~{events/fragments/layout :: tabs(${event}, ${activeTab})}"></div>
+
+    <div class="feature-panel">
+        <h2>💬 Чат мероприятия</h2>
+        <p class="panel-hint">Все детали в одном месте. Новые сообщения подгружаются автоматически.</p>
+
+        <div id="chat-box" class="chat-box" th:attr="data-event-id=${event.id}">
+            <div class="chat-empty" th:if="${#lists.isEmpty(messages)}">Сообщений пока нет — напиши первым 👋</div>
+            <div th:each="m : ${messages}" class="chat-message" th:classappend="${m.mine} ? ' mine'"
+                 th:attr="data-id=${m.id}">
+                <div class="chat-author" th:text="${m.authorName}">Автор</div>
+                <div class="chat-text" th:text="${m.text}">Текст</div>
+                <div class="chat-time" th:text="${m.createdAt}">время</div>
+            </div>
+        </div>
+
+        <form id="chat-form" class="chat-form">
+            <input type="text" id="chat-input" placeholder="Написать сообщение..." autocomplete="off" maxlength="2000"/>
+            <button type="submit" class="btn btn-primary">Отправить</button>
+        </form>
+        <div id="chat-error" class="field-error"></div>
+    </div>
+</main>
+
+<script th:inline="javascript">
+    const eventId = /*[[${event.id}]]*/ 0;
+    const box = document.getElementById('chat-box');
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('chat-input');
+    const errorBox = document.getElementById('chat-error');
+
+    function lastId() {
+        const nodes = box.querySelectorAll('.chat-message');
+        return nodes.length ? Number(nodes[nodes.length - 1].dataset.id) : 0;
+    }
+
+    function render(messages) {
+        if (!messages.length) return;
+        const empty = box.querySelector('.chat-empty');
+        if (empty) empty.remove();
+        for (const m of messages) {
+            const div = document.createElement('div');
+            div.className = 'chat-message' + (m.mine ? ' mine' : '');
+            div.dataset.id = m.id;
+            const author = document.createElement('div');
+            author.className = 'chat-author';
+            author.textContent = m.authorName;
+            const text = document.createElement('div');
+            text.className = 'chat-text';
+            text.textContent = m.text;
+            const time = document.createElement('div');
+            time.className = 'chat-time';
+            time.textContent = m.createdAt;
+            div.append(author, text, time);
+            box.appendChild(div);
+        }
+        box.scrollTop = box.scrollHeight;
+    }
+
+    async function poll() {
+        try {
+            const res = await fetch(`/events/${eventId}/chat/messages?afterId=${lastId()}`);
+            if (res.ok) render(await res.json());
+        } catch (e) {
+            /* сеть недоступна — попробуем в следующий раз */
+        }
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+        errorBox.textContent = '';
+        const res = await fetch(`/events/${eventId}/chat/messages`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({text})
+        });
+        if (res.ok) {
+            input.value = '';
+            render([await res.json()]);
+        } else {
+            const body = await res.json().catch(() => ({error: 'Не удалось отправить сообщение'}));
+            errorBox.textContent = body.error;
+        }
+    });
+
+    box.scrollTop = box.scrollHeight;
+    setInterval(poll, 3000);
+</script>
+</body>
+</html>

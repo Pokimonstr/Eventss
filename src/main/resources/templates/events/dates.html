@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Даты — ' + ${event.title}">Умный выбор даты</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav th:replace="~{events/fragments/layout :: navbar}"></nav>
+
+<main class="page-container">
+    <div th:replace="~{events/fragments/layout :: alerts}"></div>
+
+    <div class="page-header">
+        <h1 th:text="${event.title}">Мероприятие</h1>
+        <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-outline">← К мероприятию</a>
+    </div>
+
+    <div th:replace="~{events/fragments/layout :: tabs(${event}, ${activeTab})}"></div>
+
+    <div class="feature-panel">
+        <h2>🗓️ Умный выбор даты</h2>
+        <p class="panel-hint">
+            Добавь варианты, участники отмечают, когда могут. Алгоритм ранжирует варианты:
+            сначала те, где нет отказов, затем — с максимальным числом «Могу».
+        </p>
+
+        <form th:action="@{/events/{id}/dates(id=${event.id})}" method="post" class="inline-form">
+            <div class="form-group">
+                <label>Начало</label>
+                <input type="datetime-local" name="startAt" required/>
+            </div>
+            <div class="form-group">
+                <label>Окончание</label>
+                <input type="datetime-local" name="endAt"/>
+            </div>
+            <button type="submit" class="btn btn-primary">+ Добавить вариант</button>
+        </form>
+    </div>
+
+    <div th:if="${#lists.isEmpty(options)}" class="empty-state">
+        <div class="empty-icon">🗓️</div>
+        <p>Вариантов пока нет. Добавь первый — и зови участников голосовать.</p>
+    </div>
+
+    <div class="option-list">
+        <div class="option-card" th:each="o : ${options}" th:classappend="${o.recommended} ? ' recommended'">
+            <div class="option-head">
+                <div>
+                    <span class="option-date" th:text="${o.startAt}">дата</span>
+                    <span class="option-date-end" th:if="${o.endAt != null}" th:text="' — ' + ${o.endAt}"></span>
+                </div>
+                <div class="option-badges">
+                    <span class="badge badge-confirmed" th:if="${o.recommended}">⭐ Лучший вариант</span>
+                    <span class="badge badge-active" th:if="${o.everyoneCan}">Могут все</span>
+                </div>
+            </div>
+
+            <div class="vote-stats">
+                <span class="vote-stat vote-yes">👍 <span th:text="${o.yesCount}">0</span></span>
+                <span class="vote-stat vote-maybe">🤔 <span th:text="${o.maybeCount}">0</span></span>
+                <span class="vote-stat vote-no">👎 <span th:text="${o.noCount}">0</span></span>
+                <span class="vote-score">рейтинг: <b th:text="${o.score}">0</b></span>
+            </div>
+
+            <div class="vote-names">
+                <span th:if="${!#lists.isEmpty(o.yesNames)}">
+                    👍 <span th:text="${#strings.listJoin(o.yesNames, ', ')}"></span>
+                </span>
+                <span th:if="${!#lists.isEmpty(o.maybeNames)}">
+                    🤔 <span th:text="${#strings.listJoin(o.maybeNames, ', ')}"></span>
+                </span>
+                <span th:if="${!#lists.isEmpty(o.noNames)}">
+                    👎 <span th:text="${#strings.listJoin(o.noNames, ', ')}"></span>
+                </span>
+            </div>
+
+            <div class="option-actions">
+                <form th:each="c : ${choices}"
+                      th:action="@{/events/{id}/dates/{oid}/vote(id=${event.id}, oid=${o.id})}" method="post">
+                    <input type="hidden" name="choice" th:value="${c}"/>
+                    <button type="submit" class="btn btn-sm"
+                            th:classappend="${currentUser != null and o.votesByUserId.get(currentUser.id) != null and o.votesByUserId.get(currentUser.id).name() == c.name()} ? ' btn-primary' : ' btn-outline'"
+                            th:text="${c.icon} + ' ' + ${c.label}"></button>
+                </form>
+
+                <form th:action="@{/events/{id}/dates/{oid}/confirm(id=${event.id}, oid=${o.id})}" method="post">
+                    <button type="submit" class="btn btn-primary btn-sm">✅ Выбрать эту дату</button>
+                </form>
+                <form th:action="@{/events/{id}/dates/{oid}/delete(id=${event.id}, oid=${o.id})}" method="post">
+                    <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

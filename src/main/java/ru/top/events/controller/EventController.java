@@ -18,9 +18,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ru.top.events.dto.EventFormDto;
 import ru.top.events.dto.EventView;
+import ru.top.events.model.EventParticipant;
 import ru.top.events.model.EventStatus;
 import ru.top.events.model.EventType;
+import ru.top.events.service.AlbumService;
+import ru.top.events.service.AssistantService;
+import ru.top.events.service.ChatService;
 import ru.top.events.service.EventService;
+import ru.top.events.service.ExpenseService;
+import ru.top.events.service.ParticipantService;
 
 @Slf4j
 @Controller
@@ -29,6 +35,11 @@ import ru.top.events.service.EventService;
 public class EventController {
 
     private final EventService eventService;
+    private final ParticipantService participantService;
+    private final ExpenseService expenseService;
+    private final ChatService chatService;
+    private final AlbumService albumService;
+    private final AssistantService assistantService;
 
     @GetMapping
     public String list(
@@ -79,6 +90,13 @@ public class EventController {
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
         model.addAttribute("event", eventService.findById(id));
+        model.addAttribute("participants", participantService.list(id));
+        model.addAttribute("rsvpStatuses", EventParticipant.RsvpStatus.values());
+        model.addAttribute("expensesTotal", expenseService.total(id));
+        model.addAttribute("chatCount", chatService.count(id));
+        model.addAttribute("photoCount", albumService.count(id));
+        model.addAttribute("checklistProgress", assistantService.progressPercent(id));
+        model.addAttribute("activeTab", "overview");
         return "events/detail";
     }
 

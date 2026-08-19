@@ -136,7 +136,8 @@ public class EventService {
         return new EventView(
                 e.getId(), e.getTitle(), e.getDescription(),
                 e.getType(), e.getStatus(), start, end,
-                e.getLocationName(), e.getMaxParticipants(), e.getBudgetAmount(),
+                e.getLocationName(), e.getLatitude(), e.getLongitude(),
+                e.getMaxParticipants(), e.getBudgetAmount(),
                 e.getOwner().getDisplayName(), count
         );
     }

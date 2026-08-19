@@ -1,27 +1,16 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${event.title}">Мероприятие</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<nav class="navbar">
-    <div class="nav-container">
-        <a th:href="@{/}" class="logo" style="text-decoration:none">
-            <span class="logo-icon">🎉</span>
-            <span class="logo-text">Let's Go!</span>
-        </a>
-        <div class="nav-buttons">
-            <a th:href="@{/}" class="btn btn-outline">Главная</a>
-            <a th:href="@{/events}" class="btn btn-outline">Мероприятия</a>
-            <a th:href="@{/events/new}" class="btn btn-primary">+ Создать</a>
-        </div>
-    </div>
-</nav>
+<nav th:replace="~{events/fragments/layout :: navbar}"></nav>
 
 <main class="page-container">
-    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:replace="~{events/fragments/layout :: alerts}"></div>
 
     <div class="detail-card">
         <div class="event-card-top">
@@ -32,6 +21,8 @@
 
         <h1 th:text="${event.title}">Название</h1>
         <p th:text="${event.description}" style="color:var(--text-secondary);margin:1rem 0">Описание</p>
+
+        <div th:replace="~{events/fragments/layout :: tabs(${event}, ${activeTab})}"></div>
 
         <div class="detail-row"><span class="detail-label">Начало</span><span th:text="${event.startAt} ?: '—'"></span></div>
         <div class="detail-row"><span class="detail-label">Конец</span><span th:text="${event.endAt} ?: '—'"></span></div>
@@ -48,6 +39,53 @@
                 <button type="submit" class="btn btn-danger">🗑️ Удалить</button>
             </form>
         </div>
+    </div>
+
+    <div class="summary-grid">
+        <a th:href="@{/events/{id}/expenses(id=${event.id})}" class="summary-card">
+            <div class="summary-icon">💸</div>
+            <div class="summary-value" th:text="${expensesTotal} + ' ₽'">0 ₽</div>
+            <div class="summary-label">потрачено</div>
+        </a>
+        <a th:href="@{/events/{id}/chat(id=${event.id})}" class="summary-card">
+            <div class="summary-icon">💬</div>
+            <div class="summary-value" th:text="${chatCount}">0</div>
+            <div class="summary-label">сообщений</div>
+        </a>
+        <a th:href="@{/events/{id}/album(id=${event.id})}" class="summary-card">
+            <div class="summary-icon">📸</div>
+            <div class="summary-value" th:text="${photoCount}">0</div>
+            <div class="summary-label">фото</div>
+        </a>
+        <a th:href="@{/events/{id}/assistant(id=${event.id})}" class="summary-card">
+            <div class="summary-icon">🤖</div>
+            <div class="summary-value" th:text="${checklistProgress} + '%'">0%</div>
+            <div class="summary-label">чек-лист</div>
+        </a>
+    </div>
+
+    <div class="feature-panel">
+        <h3>Участники</h3>
+        <div class="participant-row" th:each="p : ${participants}">
+            <span class="participant-name" th:text="${p.displayName}">Имя</span>
+            <span class="participant-role" th:text="${p.role}">роль</span>
+            <form th:action="@{/events/{id}/participants/{pid}/rsvp(id=${event.id}, pid=${p.participantId})}"
+                  method="post" class="inline-form-tight">
+                <select name="status" class="filter-select" onchange="this.form.submit()">
+                    <option th:each="s : ${rsvpStatuses}" th:value="${s}" th:text="${s}"
+                            th:selected="${s == p.rsvpStatus}"></option>
+                </select>
+            </form>
+            <form th:action="@{/events/{id}/participants/{pid}/delete(id=${event.id}, pid=${p.participantId})}"
+                  method="post">
+                <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+            </form>
+        </div>
+
+        <form th:action="@{/events/{id}/participants(id=${event.id})}" method="post" class="inline-form-tight">
+            <input type="text" name="displayName" placeholder="Имя участника" required/>
+            <button type="submit" class="btn btn-primary">+ Добавить участника</button>
+        </form>
     </div>
 </main>
 </body>
