@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ошибка — Let's Go!</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-container">
+        <a th:href="@{/}" class="logo" style="text-decoration:none">
+            <span class="logo-icon">🎉</span>
+            <span class="logo-text">Let's Go!</span>
+        </a>
+        <div class="nav-buttons">
+            <a th:href="@{/events}" class="btn btn-outline">Мероприятия</a>
+        </div>
+    </div>
+</nav>
+
+<main class="page-container">
+    <div class="empty-state">
+        <div class="empty-icon">😕</div>
+        <h1 style="margin-bottom:1rem;font-size:2rem">Упс!</h1>
+        <p th:text="${error}">Что-то пошло не так</p>
+        <div style="margin-top:2rem;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+            <a th:href="@{/events}" class="btn btn-primary">К мероприятиям</a>
+            <a th:href="@{/}" class="btn btn-outline">На главную</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

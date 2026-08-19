@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Let's Go! — Планируй встречи без хаоса</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-container">
+        <a th:href="@{/}" class="logo" style="text-decoration:none">
+            <span class="logo-icon">🎉</span>
+            <span class="logo-text">Let's Go!</span>
+        </a>
+        <div class="nav-buttons">
+            <a th:href="@{/events}" class="btn btn-outline">Мероприятия</a>
+            <a th:href="@{/events/new}" class="btn btn-primary">+ Создать</a>
+        </div>
+    </div>
+</nav>
+
+<header class="hero">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            Планируй встречи с друзьями
+            <span class="gradient-text">без хаоса</span>
+        </h1>
+        <p class="hero-subtitle">
+            Умный выбор даты, разделение счетов, чат и воспоминания —
+            всё в одном месте. Забудь про 100 сообщений в чате.
+        </p>
+        <div class="hero-actions">
+            <a th:href="@{/events/new}" class="btn btn-primary btn-lg">Создать мероприятие 🚀</a>
+            <a th:href="@{/events}" class="btn btn-outline btn-lg">К списку</a>
+        </div>
+    </div>
+    <div class="hero-stats">
+        <div class="stat">
+            <div class="stat-number" th:text="${eventCount}">0</div>
+            <div class="stat-label">мероприятий создано</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number" th:text="${participantCount}">0</div>
+            <div class="stat-label">участников</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">🎯</div>
+            <div class="stat-label">просто и удобно</div>
+        </div>
+    </div>
+</header>
+
+<section class="features">
+    <h2 class="section-title">Что умеет Let's Go!</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🗓️</div>
+            <h3>Умный выбор даты</h3>
+            <p>Алгоритм сам найдёт время, когда могут все участники</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💸</div>
+            <h3>Разделение счетов</h3>
+            <p>Автоматический расчёт долгов с минимизацией переводов</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💬</div>
+            <h3>Чат мероприятия</h3>
+            <p>Обсуждайте детали в одном месте, а не в пяти чатах</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🗺️</div>
+            <h3>Геолокация</h3>
+            <p>Точка встречи на карте и live-статусы участников</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🤖</div>
+            <h3>AI-ассистент</h3>
+            <p>Поможет составить чек-лист и подобрать локацию</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📸</div>
+            <h3>Альбом воспоминаний</h3>
+            <p>Все фото события в одном месте с автогруппировкой</p>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+    <p>© 2026 Let's Go! — Дипломный проект. Сделано с 💜</p>
+</footer>
+</body>
+</html>

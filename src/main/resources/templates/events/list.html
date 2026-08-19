@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Мероприятия — Let's Go!</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-container">
+        <a th:href="@{/}" class="logo" style="text-decoration:none">
+            <span class="logo-icon">🎉</span>
+            <span class="logo-text">Let's Go!</span>
+        </a>
+        <div class="nav-buttons">
+            <a th:href="@{/}" class="btn btn-outline">Главная</a>
+            <a th:href="@{/events}" class="btn btn-outline">Мероприятия</a>
+            <a th:href="@{/events/new}" class="btn btn-primary">+ Создать</a>
+        </div>
+    </div>
+</nav>
+
+<main class="page-container">
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+
+    <div class="page-header">
+        <h1>Мероприятия</h1>
+        <a th:href="@{/events/new}" class="btn btn-primary">+ Создать</a>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="filters-card">
+        <form th:action="@{/events}" method="get" class="filters-form">
+            <div class="filter-group">
+                <input type="text" name="search" th:value="${search}"
+                       placeholder="🔍 Поиск по названию..." class="filter-input"/>
+            </div>
+
+            <div class="filter-group">
+                <select name="type" class="filter-select">
+                    <option value="">Все типы</option>
+                    <option th:each="t : ${types}"
+                            th:value="${t}"
+                            th:text="${t.label}"
+                            th:selected="${selectedType == t}"></option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <select name="status" class="filter-select">
+                    <option value="">Все статусы</option>
+                    <option th:each="s : ${statuses}"
+                            th:value="${s}"
+                            th:text="${s.label}"
+                            th:selected="${selectedStatus == s}"></option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Найти</button>
+            <a th:href="@{/events}" class="btn btn-outline">Сбросить</a>
+        </form>
+    </div>
+
+    <!-- Пустое состояние -->
+    <div th:if="${#lists.isEmpty(events)}" class="empty-state">
+        <div class="empty-icon" th:text="${hasFilters} ? '🔍' : '🎈'">🎈</div>
+        <p th:if="${hasFilters}">Ничего не найдено. Попробуй изменить фильтры.</p>
+        <p th:unless="${hasFilters}">Пока нет мероприятий. Создай первое!</p>
+        <a th:unless="${hasFilters}" th:href="@{/events/new}" class="btn btn-primary" style="margin-top:1rem">+ Создать</a>
+        <a th:if="${hasFilters}" th:href="@{/events}" class="btn btn-outline" style="margin-top:1rem">Сбросить фильтры</a>
+    </div>
+
+    <!-- Сетка карточек -->
+    <div class="events-grid" th:unless="${#lists.isEmpty(events)}">
+        <div class="event-card" th:each="e : ${events}">
+            <div class="event-card-top">
+                <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(e.status.name())}"
+                      th:text="${e.status.label}"></span>
+                <span class="event-type" th:text="${e.type.label}"></span>
+            </div>
+            <h3 th:text="${e.title}">Название</h3>
+            <div class="event-meta">
+                <span th:if="${e.startAt != null}">📅 <span th:text="${e.startAt}"></span></span>
+                <span th:if="${e.locationName != null}">📍 <span th:text="${e.locationName}"></span></span>
+                <span>👥 <span th:text="${e.participantCount}"></span> уч.</span>
+            </div>
+            <div class="event-actions">
+                <a th:href="@{/events/{id}(id=${e.id})}" class="btn btn-outline btn-sm">Открыть</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Пагинация -->
+    <div th:if="${totalPages > 1}" class="pagination">
+        <a th:if="${currentPage > 0}"
+           th:href="@{/events(page=${currentPage - 1}, search=${search}, type=${selectedType}, status=${selectedStatus})}"
+           class="btn btn-outline btn-sm">← Назад</a>
+
+        <span class="pagination-info">
+            Страница <span th:text="${currentPage + 1}"></span> из <span th:text="${totalPages}"></span>
+        </span>
+
+        <a th:if="${currentPage < totalPages - 1}"
+           th:href="@{/events(page=${currentPage + 1}, search=${search}, type=${selectedType}, status=${selectedStatus})}"
+           class="btn btn-outline btn-sm">Вперёд →</a>
+    </div>
+</main>
+</body>
+</html>

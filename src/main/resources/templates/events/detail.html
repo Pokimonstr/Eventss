@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${event.title}">Мероприятие</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-container">
+        <a th:href="@{/}" class="logo" style="text-decoration:none">
+            <span class="logo-icon">🎉</span>
+            <span class="logo-text">Let's Go!</span>
+        </a>
+        <div class="nav-buttons">
+            <a th:href="@{/}" class="btn btn-outline">Главная</a>
+            <a th:href="@{/events}" class="btn btn-outline">Мероприятия</a>
+            <a th:href="@{/events/new}" class="btn btn-primary">+ Создать</a>
+        </div>
+    </div>
+</nav>
+
+<main class="page-container">
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+
+    <div class="detail-card">
+        <div class="event-card-top">
+            <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(event.status.name())}"
+                  th:text="${event.status.label}"></span>
+            <span class="event-type" th:text="${event.type.label}"></span>
+        </div>
+
+        <h1 th:text="${event.title}">Название</h1>
+        <p th:text="${event.description}" style="color:var(--text-secondary);margin:1rem 0">Описание</p>
+
+        <div class="detail-row"><span class="detail-label">Начало</span><span th:text="${event.startAt} ?: '—'"></span></div>
+        <div class="detail-row"><span class="detail-label">Конец</span><span th:text="${event.endAt} ?: '—'"></span></div>
+        <div class="detail-row"><span class="detail-label">Место</span><span th:text="${event.locationName} ?: '—'"></span></div>
+        <div class="detail-row"><span class="detail-label">Организатор</span><span th:text="${event.ownerName}"></span></div>
+        <div class="detail-row"><span class="detail-label">Участников</span><span th:text="${event.participantCount}"></span></div>
+        <div class="detail-row"><span class="detail-label">Макс. участников</span><span th:text="${event.maxParticipants} ?: '—'"></span></div>
+        <div class="detail-row"><span class="detail-label">Бюджет</span><span th:text="${event.budgetAmount != null ? event.budgetAmount + ' ₽' : '—'}"></span></div>
+
+        <div class="detail-actions">
+            <a th:href="@{/events/{id}/edit(id=${event.id})}" class="btn btn-outline">✏️ Редактировать</a>
+            <form th:action="@{/events/{id}/delete(id=${event.id})}" method="post"
+                  onsubmit="return confirm('Точно удалить?')">
+                <button type="submit" class="btn btn-danger">🗑️ Удалить</button>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>
