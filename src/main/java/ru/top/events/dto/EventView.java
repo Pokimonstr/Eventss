@@ -18,6 +18,8 @@ public class EventView {
     private String startAt;
     private String endAt;
     private String locationName;
+    private Double latitude;
+    private Double longitude;
     private Integer maxParticipants;
     private BigDecimal budgetAmount;
     private String ownerName;

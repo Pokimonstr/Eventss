@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Счета — ' + ${event.title}">Разделение счетов</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav th:replace="~{events/fragments/layout :: navbar}"></nav>
+
+<main class="page-container">
+    <div th:replace="~{events/fragments/layout :: alerts}"></div>
+
+    <div class="page-header">
+        <h1 th:text="${event.title}">Мероприятие</h1>
+        <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-outline">← К мероприятию</a>
+    </div>
+
+    <div th:replace="~{events/fragments/layout :: tabs(${event}, ${activeTab})}"></div>
+
+    <div class="feature-panel">
+        <h2>💸 Разделение счетов</h2>
+        <p class="panel-hint">
+            Всего потрачено: <b th:text="${total} + ' ₽'">0 ₽</b>.
+            Расход делится поровну между отмеченными участниками, остаток копеек — первым в списке.
+        </p>
+
+        <form th:action="@{/events/{id}/expenses(id=${event.id})}" method="post" class="inline-form">
+            <div class="form-group">
+                <label>Что оплатили</label>
+                <input type="text" name="title" placeholder="Пицца" required/>
+            </div>
+            <div class="form-group">
+                <label>Сумма, ₽</label>
+                <input type="number" name="amount" step="0.01" min="0.01" required/>
+            </div>
+            <div class="form-group">
+                <label>Кто платил</label>
+                <select name="payerId" required>
+                    <option th:each="p : ${participants}" th:value="${p.userId}" th:text="${p.displayName}"
+                            th:selected="${currentUser != null and p.userId == currentUser.id}"></option>
+                </select>
+            </div>
+            <div class="form-group form-group-wide">
+                <label>Делим между</label>
+                <div class="checkbox-row">
+                    <label class="checkbox" th:each="p : ${participants}">
+                        <input type="checkbox" name="sharedWith" th:value="${p.userId}" checked/>
+                        <span th:text="${p.displayName}"></span>
+                    </label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">+ Добавить расход</button>
+        </form>
+    </div>
+
+    <div class="two-columns">
+        <div class="feature-panel">
+            <h3>Баланс участников</h3>
+            <div th:if="${#lists.isEmpty(balances)}" class="empty-inline">Пока нет данных</div>
+            <div class="balance-row" th:each="b : ${balances}">
+                <span th:text="${b.userName}">Имя</span>
+                <span class="balance-detail">
+                    заплатил <b th:text="${b.paid} + ' ₽'"></b>, доля <b th:text="${b.owed} + ' ₽'"></b>
+                </span>
+                <span class="balance-value"
+                      th:classappend="${b.balance.signum() > 0} ? ' positive' : (${b.balance.signum() < 0} ? ' negative' : '')"
+                      th:text="${b.balance} + ' ₽'">0 ₽</span>
+            </div>
+        </div>
+
+        <div class="feature-panel">
+            <h3>Кто кому переводит</h3>
+            <p class="panel-hint">Жадный алгоритм: не больше (N−1) переводов вместо расчётов «каждый с каждым».</p>
+            <div th:if="${#lists.isEmpty(settlements)}" class="empty-inline">Все в расчёте 🎉</div>
+            <div class="settlement-row" th:each="s : ${settlements}">
+                <span th:text="${s.fromName}">Кто</span>
+                <span class="settlement-arrow">→</span>
+                <span th:text="${s.toName}">Кому</span>
+                <b class="settlement-amount" th:text="${s.amount} + ' ₽'">0 ₽</b>
+            </div>
+        </div>
+    </div>
+
+    <div class="feature-panel">
+        <h3>Расходы</h3>
+        <div th:if="${#lists.isEmpty(expenses)}" class="empty-inline">Расходов пока нет</div>
+        <div class="expense-row" th:each="e : ${expenses}">
+            <div>
+                <b th:text="${e.title}">Название</b>
+                <div class="expense-meta">
+                    <span th:text="'Платил: ' + ${e.payerName}"></span>
+                    <span th:text="'Делим на ' + ${#lists.size(e.sharedWith)} + ' чел. по ' + ${e.amountPerPerson} + ' ₽'"></span>
+                    <span th:text="${e.createdAt}"></span>
+                </div>
+            </div>
+            <div class="expense-right">
+                <b th:text="${e.amount} + ' ₽'">0 ₽</b>
+                <form th:action="@{/events/{id}/expenses/{eid}/delete(id=${event.id}, eid=${e.id})}" method="post">
+                    <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

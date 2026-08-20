@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Геолокация — ' + ${event.title}">Геолокация</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+<nav th:replace="~{events/fragments/layout :: navbar}"></nav>
+
+<main class="page-container">
+    <div th:replace="~{events/fragments/layout :: alerts}"></div>
+
+    <div class="page-header">
+        <h1 th:text="${event.title}">Мероприятие</h1>
+        <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-outline">← К мероприятию</a>
+    </div>
+
+    <div th:replace="~{events/fragments/layout :: tabs(${event}, ${activeTab})}"></div>
+
+    <div class="feature-panel">
+        <h2>🗺️ Точка встречи и live-статусы</h2>
+        <p class="panel-hint">
+            Кликни по карте, чтобы поставить точку встречи. Участники делятся геопозицией —
+            расстояние и время в пути считаются автоматически.
+        </p>
+
+        <div id="map" class="map"></div>
+
+        <form th:action="@{/events/{id}/location/point(id=${event.id})}" method="post" class="inline-form"
+              id="point-form">
+            <div class="form-group">
+                <label>Название места</label>
+                <input type="text" name="name" th:value="${event.locationName}" placeholder="Парк Горького"/>
+            </div>
+            <div class="form-group">
+                <label>Широта</label>
+                <input type="number" step="any" name="latitude" id="lat-input" th:value="${event.latitude}" required/>
+            </div>
+            <div class="form-group">
+                <label>Долгота</label>
+                <input type="number" step="any" name="longitude" id="lng-input" th:value="${event.longitude}" required/>
+            </div>
+            <button type="submit" class="btn btn-primary">Сохранить точку встречи</button>
+        </form>
+
+        <div class="location-actions">
+            <button type="button" class="btn btn-primary" id="share-location">📍 Поделиться геопозицией</button>
+            <form th:action="@{/events/{id}/location/status(id=${event.id})}" method="post" class="inline-form-tight">
+                <select name="status" class="filter-select">
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.icon} + ' ' + ${s.label}"></option>
+                </select>
+                <button type="submit" class="btn btn-outline">Обновить статус</button>
+            </form>
+            <span id="geo-error" class="field-error"></span>
+        </div>
+    </div>
+
+    <div class="feature-panel">
+        <h3>Участники</h3>
+        <div th:if="${#lists.isEmpty(locations)}" class="empty-inline">
+            Никто ещё не поделился геопозицией
+        </div>
+        <div class="live-row" th:each="l : ${locations}">
+            <span class="live-name" th:text="${l.statusIcon} + ' ' + ${l.userName}">Имя</span>
+            <span class="live-status" th:text="${l.statusLabel}">статус</span>
+            <span class="live-distance" th:if="${l.distanceKm != null}"
+                  th:text="${l.distanceKm} + ' км · ~' + ${l.etaMinutes} + ' мин'"></span>
+            <span class="live-time" th:text="'обновлено в ' + ${l.updatedAt}"></span>
+        </div>
+    </div>
+</main>
+
+<script th:inline="javascript">
+    const eventId = /*[[${event.id}]]*/ 0;
+    const eventLat = /*[[${event.latitude}]]*/ null;
+    const eventLng = /*[[${event.longitude}]]*/ null;
+
+    const start = (eventLat != null && eventLng != null) ? [eventLat, eventLng] : [55.751244, 37.618423];
+    const map = L.map('map').setView(start, eventLat != null ? 14 : 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    let meetingMarker = null;
+    if (eventLat != null && eventLng != null) {
+        meetingMarker = L.marker([eventLat, eventLng]).addTo(map).bindPopup('Точка встречи');
+    }
+
+    map.on('click', (e) => {
+        document.getElementById('lat-input').value = e.latlng.lat.toFixed(6);
+        document.getElementById('lng-input').value = e.latlng.lng.toFixed(6);
+        if (meetingMarker) {
+            meetingMarker.setLatLng(e.latlng);
+        } else {
+            meetingMarker = L.marker(e.latlng).addTo(map).bindPopup('Точка встречи');
+        }
+    });
+
+    const participantLayer = L.layerGroup().addTo(map);
+
+    async function refreshParticipants() {
+        const res = await fetch(`/events/${eventId}/location/participants`);
+        if (!res.ok) return;
+        const people = await res.json();
+        participantLayer.clearLayers();
+        for (const p of people) {
+            const parts = [p.statusIcon + ' ' + p.userName, p.statusLabel];
+            if (p.distanceKm != null) parts.push(p.distanceKm + ' км · ~' + p.etaMinutes + ' мин');
+            L.circleMarker([p.latitude, p.longitude], {radius: 8, color: '#ec4899'})
+                .addTo(participantLayer)
+                .bindPopup(parts.join('<br>'));
+        }
+    }
+
+    document.getElementById('share-location').addEventListener('click', () => {
+        const errorBox = document.getElementById('geo-error');
+        errorBox.textContent = '';
+        if (!navigator.geolocation) {
+            errorBox.textContent = 'Браузер не поддерживает геолокацию';
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const res = await fetch(`/events/${eventId}/location/me`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({latitude: pos.coords.latitude, longitude: pos.coords.longitude})
+            });
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                errorBox.textContent = 'Не удалось сохранить геопозицию';
+            }
+        }, () => {
+            errorBox.textContent = 'Доступ к геолокации запрещён';
+        });
+    });
+
+    refreshParticipants();
+    setInterval(refreshParticipants, 15000);
+</script>
+</body>
+</html>

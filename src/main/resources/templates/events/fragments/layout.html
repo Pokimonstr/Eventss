@@ -1,3 +1,7 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+
 <nav th:fragment="navbar" class="navbar">
     <div class="nav-container">
         <a th:href="@{/}" class="logo" style="text-decoration:none">
@@ -5,9 +9,42 @@
             <span class="logo-text">Let's Go!</span>
         </a>
         <div class="nav-buttons">
+            <form th:if="${currentUser != null}" th:action="@{/switch-user}" method="post" class="user-switch">
+                <span class="user-switch-label">Вы:</span>
+                <input type="hidden" name="redirect" th:value="${currentUri}"/>
+                <select name="userId" onchange="this.form.submit()" class="filter-select">
+                    <option th:each="u : ${allUsers}" th:value="${u.id}" th:text="${u.displayName}"
+                            th:selected="${u.id == currentUser.id}"></option>
+                </select>
+            </form>
             <a th:href="@{/}" class="btn btn-outline">Главная</a>
             <a th:href="@{/events}" class="btn btn-outline">Мероприятия</a>
             <a th:href="@{/events/new}" class="btn btn-primary">+ Создать</a>
         </div>
     </div>
 </nav>
+
+<div th:fragment="alerts">
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+</div>
+
+<div th:fragment="tabs(event, activeTab)" class="event-tabs">
+    <a th:href="@{/events/{id}(id=${event.id})}" class="event-tab"
+       th:classappend="${activeTab == 'overview'} ? ' active'">📋 Обзор</a>
+    <a th:href="@{/events/{id}/dates(id=${event.id})}" class="event-tab"
+       th:classappend="${activeTab == 'dates'} ? ' active'">🗓️ Даты</a>
+    <a th:href="@{/events/{id}/expenses(id=${event.id})}" class="event-tab"
+       th:classappend="${activeTab == 'expenses'} ? ' active'">💸 Счета</a>
+    <a th:href="@{/events/{id}/chat(id=${event.id})}" class="event-tab"
+       th:classappend="${activeTab == 'chat'} ? ' active'">💬 Чат</a>
+    <a th:href="@{/events/{id}/location(id=${event.id})}" class="event-tab"
+       th:classappend="${activeTab == 'location'} ? ' active'">🗺️ Геолокация</a>
+    <a th:href="@{/events/{id}/assistant(id=${event.id})}" class="event-tab"
+       th:classappend="${activeTab == 'assistant'} ? ' active'">🤖 AI-ассистент</a>
+    <a th:href="@{/events/{id}/album(id=${event.id})}" class="event-tab"
+       th:classappend="${activeTab == 'album'} ? ' active'">📸 Альбом</a>
+</div>
+
+</body>
+</html>

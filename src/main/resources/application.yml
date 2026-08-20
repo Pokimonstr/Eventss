@@ -20,8 +20,17 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 60MB
+
 server:
   port: 8080
+
+# Куда складываются фото альбома воспоминаний
+app:
+  upload-dir: uploads
 
 # ЛОГИРОВАНИЕ
 logging:

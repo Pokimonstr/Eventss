@@ -6,19 +6,7 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<nav class="navbar">
-    <div class="nav-container">
-        <a th:href="@{/}" class="logo" style="text-decoration:none">
-            <span class="logo-icon">🎉</span>
-            <span class="logo-text">Let's Go!</span>
-        </a>
-        <div class="nav-buttons">
-            <a th:href="@{/}" class="btn btn-outline">Главная</a>
-            <a th:href="@{/events}" class="btn btn-outline">Мероприятия</a>
-            <a th:href="@{/events/new}" class="btn btn-primary">+ Создать</a>
-        </div>
-    </div>
-</nav>
+<nav th:replace="~{events/fragments/layout :: navbar}"></nav>
 
 <main class="page-container">
     <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>

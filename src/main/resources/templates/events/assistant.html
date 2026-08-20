@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'AI-ассистент — ' + ${event.title}">AI-ассистент</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav th:replace="~{events/fragments/layout :: navbar}"></nav>
+
+<main class="page-container">
+    <div th:replace="~{events/fragments/layout :: alerts}"></div>
+
+    <div class="page-header">
+        <h1 th:text="${event.title}">Мероприятие</h1>
+        <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-outline">← К мероприятию</a>
+    </div>
+
+    <div th:replace="~{events/fragments/layout :: tabs(${event}, ${activeTab})}"></div>
+
+    <div class="feature-panel">
+        <h2>🤖 Советы ассистента</h2>
+        <ul class="advice-list">
+            <li th:each="a : ${advice}" th:text="${a}">совет</li>
+        </ul>
+    </div>
+
+    <div class="two-columns">
+        <div class="feature-panel">
+            <h3>Чек-лист подготовки</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" th:style="'width:' + ${progress} + '%'"></div>
+            </div>
+            <p class="panel-hint"><span th:text="${progress}">0</span>% пунктов закрыто</p>
+
+            <form th:action="@{/events/{id}/assistant/generate(id=${event.id})}" method="post">
+                <button type="submit" class="btn btn-primary btn-sm">🤖 Собрать чек-лист</button>
+            </form>
+
+            <div th:if="${#lists.isEmpty(checklist)}" class="empty-inline">
+                Чек-листа пока нет — нажми «Собрать чек-лист».
+            </div>
+
+            <div class="check-row" th:each="item : ${checklist}">
+                <form th:action="@{/events/{id}/assistant/items/{iid}/toggle(id=${event.id}, iid=${item.id})}"
+                      method="post">
+                    <button type="submit" class="check-toggle" th:text="${item.done} ? '☑' : '☐'">☐</button>
+                </form>
+                <span class="check-text" th:classappend="${item.done} ? ' done'" th:text="${item.text}">пункт</span>
+                <span class="check-category" th:text="${item.category}">категория</span>
+                <form th:action="@{/events/{id}/assistant/items/{iid}/delete(id=${event.id}, iid=${item.id})}"
+                      method="post">
+                    <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+                </form>
+            </div>
+
+            <form th:action="@{/events/{id}/assistant/items(id=${event.id})}" method="post" class="inline-form-tight">
+                <input type="text" name="text" placeholder="Свой пункт..." required/>
+                <button type="submit" class="btn btn-outline">+ Добавить</button>
+            </form>
+        </div>
+
+        <div class="feature-panel">
+            <h3>Подбор локации</h3>
+            <p class="panel-hint">Сначала — варианты, которые укладываются в бюджет на человека.</p>
+            <div class="suggestion-card" th:each="s : ${suggestions}">
+                <div class="suggestion-head">
+                    <b th:text="${s.name}">Место</b>
+                    <span class="badge badge-planning" th:text="${s.priceHint}">цена</span>
+                </div>
+                <p th:text="${s.description}">описание</p>
+                <span class="suggestion-price" th:text="'≈ ' + ${s.pricePerPerson} + ' ₽ с человека'"></span>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>
